@@ -31,7 +31,6 @@
             // Get the infoHash and fileIndex from URL query parameters
             const urlParams = new URLSearchParams(window.location.search);
             const infoHash = urlParams.get('infoHash'); // Expecting the query parameter infoHash
-            const fileIndex = parseInt(urlParams.get('fileIndex')) || 0; // Default to 0 if not provided
 
             if (!infoHash) {
                 console.error('No infoHash provided in the URL.');
@@ -43,14 +42,13 @@
 
             // Add the torrent by infoHash
             client.add(infoHash, { infoHash: true }, torrent => {
-                // Filter for video files (e.g., .mp4)
-                const videoFiles = torrent.files.filter(file => file.name.endsWith('.mp4'));
+                // Filter for video files based on MIME type
+                const videoFiles = torrent.files.filter(file => file.mime.startsWith('video/'));
 
-                // Check if the requested fileIndex is valid
-                if (videoFiles.length > fileIndex) {
-                    playFile(videoFiles[fileIndex]);
+                if (videoFiles.length > 0) {
+                    playFile(videoFiles[0]); // Play the first available video file
                 } else {
-                    console.error('Invalid file index or no video files available.');
+                    console.error('No video files found in the torrent.');
                 }
             });
 
