@@ -33,61 +33,66 @@
     <video id="video-player" class="video-js vjs-default-skin" controls preload="auto"></video>
 
     <script>
-        // Get the infoHash and fileIndex from URL query parameters
-        const urlParams = new URLSearchParams(window.location.search);
-        const infoHash = urlParams.get('infoHash'); // Expecting the query parameter infoHash
-        const fileIndex = parseInt(urlParams.get('fileIndex')) || 0; // Default to 0 if not provided
+        function startTorrentPlayer() {
+            // Get the infoHash and fileIndex from URL query parameters
+            const urlParams = new URLSearchParams(window.location.search);
+            const infoHash = urlParams.get('infoHash'); // Expecting the query parameter infoHash
+            const fileIndex = parseInt(urlParams.get('fileIndex')) || 0; // Default to 0 if not provided
 
-        if (!infoHash) {
-            console.error('No infoHash provided in the URL.');
-            return;
-        }
-
-        const client = new WebTorrent();
-        const player = videojs('video-player');
-
-        // Add the torrent by infoHash
-        client.add(infoHash, { infoHash: true }, torrent => {
-            // Filter for video files (e.g., .mp4)
-            const videoFiles = torrent.files.filter(file => file.name.endsWith('.mp4'));
-
-            // Check if the requested fileIndex is valid
-            if (videoFiles.length > fileIndex) {
-                playFile(videoFiles[fileIndex]);
-            } else {
-                console.error('Invalid file index or no video files available.');
+            if (!infoHash) {
+                console.error('No infoHash provided in the URL.');
+                return; // exit if no infoHash
             }
-        });
 
-        function playFile(file) {
-            file.getBlobURL((err, url) => {
-                if (err) {
-                    console.error('Error generating blob URL:', err);
-                    return;
+            const client = new WebTorrent();
+            const player = videojs('video-player');
+
+            // Add the torrent by infoHash
+            client.add(infoHash, { infoHash: true }, torrent => {
+                // Filter for video files (e.g., .mp4)
+                const videoFiles = torrent.files.filter(file => file.name.endsWith('.mp4'));
+
+                // Check if the requested fileIndex is valid
+                if (videoFiles.length > fileIndex) {
+                    playFile(videoFiles[fileIndex]);
+                } else {
+                    console.error('Invalid file index or no video files available.');
                 }
-
-                // Set the video source and type for video.js
-                player.src({
-                    src: url,
-                    type: 'video/mp4'
-                });
-
-                // Optionally, add subtitle tracks if available
-                file.getBlobURL((err, blob) => {
-                    if (!err && file.name.endsWith('.srt')) {
-                        player.addRemoteTextTrack({
-                            src: blob,
-                            kind: 'subtitles',
-                            srclang: 'en',
-                            label: file.name
-                        }, false);
-                    }
-                });
-
-                // Start playing the video
-                player.play();
             });
+
+            function playFile(file) {
+                file.getBlobURL((err, url) => {
+                    if (err) {
+                        console.error('Error generating blob URL:', err);
+                        return;
+                    }
+
+                    // Set the video source and type for video.js
+                    player.src({
+                        src: url,
+                        type: 'video/mp4'
+                    });
+
+                    // Optionally, add subtitle tracks if available
+                    file.getBlobURL((err, blob) => {
+                        if (!err && file.name.endsWith('.srt')) {
+                            player.addRemoteTextTrack({
+                                src: blob,
+                                kind: 'subtitles',
+                                srclang: 'en',
+                                label: file.name
+                            }, false);
+                        }
+                    });
+
+                    // Start playing the video
+                    player.play();
+                });
+            }
         }
+
+        // Call the function to start the player
+        startTorrentPlayer();
     </script>
 </body>
 </html>
